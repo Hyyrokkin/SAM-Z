@@ -6,7 +6,7 @@
 #include "reciter.h"
 #include "sam.h"
 #include "debug.h"
-//#define USESDL
+
 #ifdef USESDL
 #include <SDL.h>
 #include <SDL_audio.h>
@@ -236,22 +236,26 @@ int cMain(int argc, char **argv)
 		i++;
 	} //while
 
-	for(i=0; input[i] != 0; i++)
+	for(i=0; input[i] != 0; i++) {
 		input[i] = (unsigned char)toupper((int)input[i]);
+	}
 
-	if (debug)
-	{
+	if (debug) {
 		if (phonetic) printf("phonetic input: %s\n", input);
 		else printf("text input: %s\n", input); 
 	}
 	
-	if (!phonetic)
-	{
+	if (!phonetic) {
 		strcat_s((char*)input, 256, "[");
-		if (!TextToPhonemes(input)) return 1;
-		if (debug)
-		printf("phonetic input: %s\n", input);
-	} else strcat_s((char*)input, 256, "\x9b");
+		if (!TextToPhonemes(input)) {
+			return 1;
+		}
+		if (debug){
+			printf("phonetic input: %s\n", input);
+		}
+	} else {
+		strcat_s((char*)input, 256, "\x9b");
+	}
 	
 	#ifdef USESDL
 

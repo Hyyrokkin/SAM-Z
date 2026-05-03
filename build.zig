@@ -28,6 +28,12 @@ pub fn build(b: *std.Build) void {
     });
     oldSAM.addIncludePath(b.path("src/old"));
 
+    const config = b.addModule("config", .{
+        .root_source_file = b.path("config/config.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const exe = b.addExecutable(.{
         .name = "SAM_Z",
         .root_module = b.createModule(.{
@@ -37,6 +43,7 @@ pub fn build(b: *std.Build) void {
             .link_libc = true,
             .imports = &.{
                 .{ .name = "oldSAM", .module = oldSAM },
+                .{ .name = "config", .module = config },
             },
         }),
     });
