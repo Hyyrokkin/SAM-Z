@@ -2,7 +2,7 @@ OBJS = reciter.o sam.o render.o debug.o processframes.o createtransitions.o main
 BUILD = out/
 
 
-CC = cc
+CC = zig cc
 
 # libsdl present
 CFLAGS = -Wall -O2 -DUSESDL `sdl-config --cflags` -DcMain=main
