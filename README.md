@@ -1,7 +1,7 @@
 SAM
 ===
 
-Software Automatic Mouth - Tiny Speech Synthesizer 
+Software Automatic Mouth Zig - Tiny Speech Synthesizer 
 
 
 What is SAM?
