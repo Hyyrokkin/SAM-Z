@@ -1,6 +1,6 @@
 const std = @import("std");
-const mem = std.mem;
-const io = std.Io;
+const Mem = std.mem;
+const Io = std.Io;
 
 const config = @import("config");
 const oldSAM = @import("oldSAM");
@@ -9,11 +9,11 @@ const reciter = @import("reciter.zig");
 const runOld = @import("runOld.zig").runOld;
 const sam = @import("sam.zig");
 
-var stdout: *io.Writer = undefined;
+var stdout: *Io.Writer = undefined;
 
 var debug: bool = false;
 
-fn std_print(allocator: mem.Allocator, comptime fmt: []const u8, args: anytype) !void {
+fn std_print(allocator: Mem.Allocator, comptime fmt: []const u8, args: anytype) !void {
     const str = try std.fmt.allocPrint(allocator, fmt, args);
     defer allocator.free(str);
     _ = try stdout.write(str);
@@ -23,9 +23,9 @@ fn std_print(allocator: mem.Allocator, comptime fmt: []const u8, args: anytype) 
 pub fn main(init: std.process.Init) !void {
     //try runOld(init);
 
-    const arena: mem.Allocator = init.arena.allocator();
+    const arena: Mem.Allocator = init.arena.allocator();
     var stdout_buffer: [1024]u8 = undefined;
-    var stdout_file_writer: io.File.Writer = .init(.stdout(), init.io, &stdout_buffer);
+    var stdout_file_writer: Io.File.Writer = .init(.stdout(), init.io, &stdout_buffer);
     stdout = &stdout_file_writer.interface;
 
     // Accessing command line arguments:
@@ -51,26 +51,26 @@ pub fn main(init: std.process.Init) !void {
             try inputBuilder.appendSlice(arena, args[i]);
             try inputBuilder.appendSlice(arena, " ");
         } else {
-            if (mem.eql(u8, args[i][1..], "wav")) {
+            if (Mem.eql(u8, args[i][1..], "wav")) {
                 wavfile = args[i + 1];
                 outputFile = true;
                 i += 1;
-            } else if (mem.eql(u8, args[i][1..], "sing")) {
+            } else if (Mem.eql(u8, args[i][1..], "sing")) {
                 sam.enableSingmode();
-            } else if (mem.eql(u8, args[i][1..], "phonetic")) {
+            } else if (Mem.eql(u8, args[i][1..], "phonetic")) {
                 phonetic = true;
-            } else if (mem.eql(u8, args[i][1..], "debug")) {
+            } else if (Mem.eql(u8, args[i][1..], "debug")) {
                 debug = true;
-            } else if (mem.eql(u8, args[i][1..], "pitch")) {
+            } else if (Mem.eql(u8, args[i][1..], "pitch")) {
                 sam.setPitch(try std.fmt.parseInt(u8, args[i + 1], 10));
                 i += 1;
-            } else if (mem.eql(u8, args[i][1..], "speed")) {
+            } else if (Mem.eql(u8, args[i][1..], "speed")) {
                 sam.setSpeed(try std.fmt.parseInt(u8, args[i + 1], 10));
                 i += 1;
-            } else if (mem.eql(u8, args[i][1..], "mouth")) {
+            } else if (Mem.eql(u8, args[i][1..], "mouth")) {
                 sam.setMouth(try std.fmt.parseInt(u8, args[i + 1], 10));
                 i += 1;
-            } else if (mem.eql(u8, args[i][1..], "throat")) {
+            } else if (Mem.eql(u8, args[i][1..], "throat")) {
                 sam.setThroat(try std.fmt.parseInt(u8, args[i + 1], 10));
                 i += 1;
             } else {
@@ -115,20 +115,18 @@ pub fn main(init: std.process.Init) !void {
 
     if (outputFile) {
         const buff = sam.getBuffer();
-        writeWav(wavfile, buff, buff.len / 50);
+        try writeWav(wavfile, buff, buff.len / 50, init.io);
     } else {
         outputSound();
     }
 }
 
-fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize) !void {
-    const cwd = std.fs.cwd();
-    var output_file = try cwd.createFile(filename, .{
-        .read = true,
-        .truncate = true,
-    });
+fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize, io_obj: Io) !void {
+    var output_file = try Io.Dir.openFile(std.Io.Dir.cwd(), io_obj, filename, .{ .mode = .write_only });
     defer output_file.close();
-    // const output_buffer: [1024]u8 = []u8{0} ** 1024;
+    var output_buffer: [1024]u8 = undefined;
+    var output_writer: *Writer = &output_file.writer(io_obj, &output_buffer).interface;
+
     _ = buffer; // autofix
     // const fmtlength: u32 = 16;
     // const format: u16 = 1; //PCM
@@ -136,12 +134,12 @@ fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize) !void {
     // const samplerate: u32 = 22050;
     // const  blockalign: u16 = 1;
     // const bitspersample: u16 = 8;
-    const filesize: i32 = bufferlength + 12 + 16 + 8 - 8;
+    const filesize: usize = bufferlength + 12 + 16 + 8 - 8;
 
     // //RIFF header
-    try output_file.write("RIFF");
-    try output_file.write(filesize);
-    try output_file.write("WAVE");
+    _ = try output_writer.write("RIFF");
+    _ = try output_writer.write(filesize);
+    _ = try output_writer.write("WAVE");
     // fwrite(&filesize, 4, 1, file);
     // fwrite("WAVE", 4, 1, file);
 
