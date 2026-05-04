@@ -121,23 +121,27 @@ pub fn main(init: std.process.Init) !void {
     }
 }
 
-fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize) void {
-    _ = filename; // autofix
+fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize) !void {
+    const cwd = std.fs.cwd();
+    var output_file = try cwd.createFile(filename, .{
+        .read = true,
+        .truncate = true,
+    });
+    defer output_file.close();
+    // const output_buffer: [1024]u8 = []u8{0} ** 1024;
     _ = buffer; // autofix
-    _ = bufferlength; // autofix
     // const fmtlength: u32 = 16;
     // const format: u16 = 1; //PCM
     // const channels: u16 = 1;
     // const samplerate: u32 = 22050;
     // const  blockalign: u16 = 1;
     // const bitspersample: u16 = 8;
+    const filesize: i32 = bufferlength + 12 + 16 + 8 - 8;
 
-    // FILE *file;
-    // fopen_s(&file, filename, "wb");
-    // if (file == NULL) return;
     // //RIFF header
-    // fwrite("RIFF", 4, 1,file);
-    // const filesize: i32 = filesize=bufferlength + 12 + 16 + 8 - 8;
+    try output_file.write("RIFF");
+    try output_file.write(filesize);
+    try output_file.write("WAVE");
     // fwrite(&filesize, 4, 1, file);
     // fwrite("WAVE", 4, 1, file);
 
