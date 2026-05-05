@@ -122,43 +122,39 @@ pub fn main(init: std.process.Init) !void {
 }
 
 fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize, io_obj: Io) !void {
-    var output_file = try Io.Dir.openFile(std.Io.Dir.cwd(), io_obj, filename, .{ .mode = .write_only });
-    defer output_file.close();
+    var output_file = try Io.Dir.createFile(std.Io.Dir.cwd(), io_obj, filename, .{ .truncate = true });
+    defer output_file.close(io_obj);
     var output_buffer: [1024]u8 = undefined;
-    var output_writer: *Writer = &output_file.writer(io_obj, &output_buffer).interface;
+    var output_writer: Io.File.Writer = output_file.writer(io_obj, &output_buffer);
+    var out: *Io.Writer = &output_writer.interface;
 
-    _ = buffer; // autofix
-    // const fmtlength: u32 = 16;
-    // const format: u16 = 1; //PCM
-    // const channels: u16 = 1;
-    // const samplerate: u32 = 22050;
-    // const  blockalign: u16 = 1;
-    // const bitspersample: u16 = 8;
-    const filesize: usize = bufferlength + 12 + 16 + 8 - 8;
+    const fmtlength: u32 = 16;
+    const format: u16 = 1; //PCM
+    const channels: u16 = 1;
+    const samplerate: u32 = 22050;
+    const blockalign: u16 = 1;
+    const bitspersample: u16 = 8;
 
     // //RIFF header
-    _ = try output_writer.write("RIFF");
-    _ = try output_writer.write(filesize);
-    _ = try output_writer.write("WAVE");
-    // fwrite(&filesize, 4, 1, file);
-    // fwrite("WAVE", 4, 1, file);
+    _ = try out.write("RIFF");
+    const filesize: usize = bufferlength + 12 + 16 + 8 - 8;
+    _ = try out.writeInt(usize, filesize, .native);
+    _ = try out.write("WAVE");
 
     // //format chunk
-    // fwrite("fmt ", 4, 1, file);
-    // fwrite(&fmtlength, 4, 1, file);
-    // fwrite(&format, 2, 1, file);
-    // fwrite(&channels, 2, 1, file);
-    // fwrite(&samplerate, 4, 1, file);
-    // fwrite(&samplerate, 4, 1, file); // bytes/second
-    // fwrite(&blockalign, 2, 1, file);
-    // fwrite(&bitspersample, 2, 1, file);
+    _ = try out.write("fmt");
+    _ = try out.writeInt(u16, fmtlength, .native);
+    _ = try out.writeInt(u16, format, .native);
+    _ = try out.writeInt(u16, channels, .native);
+    _ = try out.writeInt(u32, samplerate, .native);
+    _ = try out.writeInt(u32, samplerate, .native);
+    _ = try out.writeInt(u16, blockalign, .native);
+    _ = try out.writeInt(u16, bitspersample, .native);
 
     // //data chunk
-    // fwrite("data", 4, 1, file);
-    // fwrite(&bufferlength, 4, 1, file);
-    // fwrite(buffer, bufferlength, 1, file);
-
-    // fclose(file);
+    _ = try out.write("data");
+    _ = try out.writeInt(usize, bufferlength, .native);
+    _ = try out.write(buffer);
 }
 
 fn outputSound() void {}
