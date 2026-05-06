@@ -129,7 +129,7 @@ fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize, io_obj: Io)
     var out: *Io.Writer = &output_writer.interface;
 
     const fmtlength: u32 = 16;
-    const format: u16 = 1; //PCM
+    const wFormatTag: u16 = 0x0001; //PCM
     const channels: u16 = 1;
     const samplerate: u32 = 22050;
     const blockalign: u16 = 1;
@@ -137,24 +137,30 @@ fn writeWav(filename: []const u8, buffer: []u8, bufferlength: usize, io_obj: Io)
 
     // //RIFF header
     _ = try out.write("RIFF");
-    const filesize: usize = bufferlength + 12 + 16 + 8 - 8;
-    _ = try out.writeInt(usize, filesize, .native);
+    const filesize: u32 = @intCast(bufferlength + 12 + 16 + 8 - 8);
+    _ = try out.writeInt(u32, filesize, .little);
     _ = try out.write("WAVE");
 
     // //format chunk
-    _ = try out.write("fmt");
-    _ = try out.writeInt(u16, fmtlength, .native);
-    _ = try out.writeInt(u16, format, .native);
-    _ = try out.writeInt(u16, channels, .native);
-    _ = try out.writeInt(u32, samplerate, .native);
-    _ = try out.writeInt(u32, samplerate, .native);
-    _ = try out.writeInt(u16, blockalign, .native);
-    _ = try out.writeInt(u16, bitspersample, .native);
+    _ = try out.write("fmt ");
+    _ = try out.writeByte(0);
+    _ = try out.writeInt(u16, fmtlength, .little);
+    _ = try out.writeInt(u16, wFormatTag, .little);
+    _ = try out.writeInt(u16, channels, .little);
+    _ = try out.writeInt(u32, samplerate, .little);
+    _ = try out.writeInt(u32, samplerate, .little); // bytes/sec
+    _ = try out.writeInt(u16, blockalign, .little);
+    _ = try out.writeInt(u16, bitspersample, .little);
 
     // //data chunk
     _ = try out.write("data");
-    _ = try out.writeInt(usize, bufferlength, .native);
+    _ = try out.writeInt(u32, @intCast(bufferlength), .little);
     _ = try out.write(buffer);
+    if (buffer.len % 2 == 1) {
+        _ = try out.writeByte(0);
+    }
+
+    _ = try out.flush();
 }
 
 fn outputSound() void {}
