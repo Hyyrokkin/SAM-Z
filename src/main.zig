@@ -94,14 +94,18 @@ pub fn main(init: std.process.Init) !void {
     }
 
     try inputBuilder.appendSlice(arena, input_upper);
+    arena.free(input_upper);
+    var input_final: []u8 = undefined;
     if (!phonetic) {
         try inputBuilder.append(arena, '[');
+        input_upper = try inputBuilder.toOwnedSlice(arena);
+        input_final = try reciter.TextToPhonemes(arena, input_upper);
         arena.free(input_upper);
-        input_upper = try std.ascii.allocUpperString(arena, try inputBuilder.toOwnedSlice(arena));
-        input_upper = try reciter.TextToPhonemes(input_upper);
         if (debug) {
-            try std_print(arena, "phonetic input: {s}\n", .{input_upper});
+            try std_print(arena, "phonetic input: {s}\n", .{input_final});
         }
+    } else {
+        input_final = try inputBuilder.toOwnedSlice(arena);
     }
 
     // if ( SDL_Init(SDL_INIT_AUDIO) < 0 ){
@@ -110,9 +114,10 @@ pub fn main(init: std.process.Init) !void {
     // }
     // defer SDL_Quit();
 
-    const c_str: [:0]u8 = try std.mem.concatWithSentinel(arena, u8, &.{input_upper}, 0);
-    defer arena.free(c_str);
+    const c_str: [:0]u8 = try std.mem.concatWithSentinel(arena, u8, &.{input_final}, 0);
+    arena.free(input_final);
     sam.setInput(c_str);
+    defer arena.free(c_str);
     if (!sam.SAMMain()) {
         // try printUsage();
         return;
