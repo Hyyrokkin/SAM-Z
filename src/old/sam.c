@@ -42,10 +42,12 @@ void SetInput(unsigned char *_input)
 {
     int i, l;
     l = strlen((char *)_input);
-    if (l > 254)
+    if (l > 254) {
         l = 254;
-    for (i = 0; i < l; i++)
+    }
+    for (i = 0; i < l; i++) {
         input[i] = _input[i];
+    }
     input[l] = 0;
 }
 
@@ -100,11 +102,13 @@ int SAMMain()
     Init();
     /* FIXME: At odds with assignment in Init() */
     phonemeindex[255] = 32; // to prevent buffer overflow
-
-    if (!Parser1())
+    
+    if (!Parser1()) {
         return 0;
-    if (debug)
+    }
+    if (debug) {
         PrintPhonemes(phonemeindex, phonemeLength, stress);
+    }
     Parser2();
     CopyStress();
     SetPhonemeLength();
@@ -112,8 +116,7 @@ int SAMMain()
     Code41240();
     do
     {
-        if (phonemeindex[X] > 80)
-        {
+        if (phonemeindex[X] > 80) {
             phonemeindex[X] = END;
             break; // error: delete all behind it
         }
@@ -350,8 +353,10 @@ int Parser1()
 
     memset(stress, 0, 256); // Clear the stress table.
 
+    printf("input: %s\n\n", input);
     while ((sign1 = input[srcpos]) != 155)
     { // 155 (\233) is end of line marker
+        printf("sign1: %c\n", sign1);
         signed int match;
         unsigned char sign2 = input[++srcpos];
         if ((match = full_match(sign1, sign2)) != -1)
@@ -371,9 +376,10 @@ int Parser1()
             // stress table backwards.
             match = 8; // End of stress table. FIXME: Don't hardcode.
             while ((sign1 != stressInputTable[match]) && (match > 0))
-                --match;
-
+            --match;
+            
             if (match == 0)
+                
                 return 0; // failure
 
             stress[position - 1] = (unsigned char)match; // Set stress for prior phoneme

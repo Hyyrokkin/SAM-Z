@@ -18,7 +18,6 @@ pub fn build(b: *std.Build) void {
             "src/old/processframes.c",
             "src/old/reciter.c",
             "src/old/render.c",
-            "src/old/sam.c",
         },
         .flags = &[_][]const u8{
             "-Wall",
@@ -48,8 +47,11 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    exe.root_module.addCSourceFile(.{
-        .file = b.path("src/old/main.c"),
+    exe.root_module.addCSourceFiles(.{
+        .files = &[_][]const u8{
+            "src/old/main.c",
+            "src/old/sam.c",
+        },
         .flags = &[_][]const u8{
             "-Wall",
             "-O2",

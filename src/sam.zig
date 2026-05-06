@@ -1,24 +1,33 @@
-pub fn setInput(_input: []u8) void {
-    _ = _input; // autofix
+const std = @import("std");
+
+const oldSAM = @cImport({
+    @cInclude("sam.h");
+});
+
+pub fn setInput(_input: [*:0]u8) void {
+    // const c_string_input: [*:0]const u8 = _input;
+    oldSAM.SetInput(_input);
 }
 pub fn setSpeed(_speed: u8) void {
-    _ = _speed; // autofix
+    oldSAM.SetSpeed(_speed);
 }
 pub fn setPitch(_pitch: u8) void {
-    _ = _pitch; // autofix
+    oldSAM.SetPitch(_pitch);
 }
 pub fn setMouth(_mouth: u8) void {
-    _ = _mouth; // autofix
+    oldSAM.SetMouth(_mouth);
 }
 pub fn setThroat(_throat: u8) void {
-    _ = _throat; // autofix
+    oldSAM.SetThroat(_throat);
 }
-pub fn enableSingmode() void {}
+pub fn enableSingmode() void {
+    oldSAM.EnableSingmode();
+}
 
 pub fn SAMMain() bool {
-    return true;
+    return oldSAM.SAMMain() == 1;
 }
 
 pub fn getBuffer() []u8 {
-    return "";
+    return std.mem.span(oldSAM.GetBuffer());
 }
